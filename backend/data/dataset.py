@@ -18,6 +18,7 @@ JSONL format expected:
 }
 """
 import json
+from sklearn.model_selection import train_test_split
 import torch
 import numpy as np
 from pathlib import Path
@@ -188,3 +189,51 @@ def build_dataloaders(
     test_loader = DataLoader(test_ds, batch_size=batch_size, shuffle=False, collate_fn=collate_fn, num_workers=num_workers)
 
     return train_loader, val_loader, test_loader
+
+
+def stratified_split_jsonl(input_path, train_path, val_path, test_path):
+    """
+    Performs stratified split on bug labels.
+    """
+
+    samples = []
+    with open(input_path, "r") as f:
+        for line in f:
+            samples.append(json.loads(line))
+
+    # Convert multi-label to single stratification label
+    # (use first bug type for stratification)
+    stratify_labels = [
+        sample["bugs"][0] if sample["bugs"] else "none"
+        for sample in samples
+    ]
+
+    train_val, test = train_test_split(
+        samples,
+        test_size=0.1,
+        stratify=stratify_labels,
+        random_state=42
+    )
+
+    stratify_train = [
+        sample["bugs"][0] if sample["bugs"] else "none"
+        for sample in train_val
+    ]
+
+    train, val = train_test_split(
+        train_val,
+        test_size=0.1,
+        stratify=stratify_train,
+        random_state=42
+    )
+
+    def write(path, data):
+        with open(path, "w") as f:
+            for sample in data:
+                f.write(json.dumps(sample) + "\n")
+
+    write(train_path, train)
+    write(val_path, val)
+    write(test_path, test)
+
+    print("Stratified split completed.")

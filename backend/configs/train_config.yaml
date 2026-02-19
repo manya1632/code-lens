@@ -2,7 +2,7 @@ model:
   backbone: "microsoft/graphcodebert-base"  
   hidden_size: 768
   num_bug_classes: 8                          
-  max_seq_length: 512
+  max_seq_length: 256
   dropout: 0.1
   use_ast_embeddings: true
   use_cfg_embeddings: true
@@ -10,9 +10,9 @@ model:
 training:
   output_dir: "./checkpoints"
   num_epochs: 10
-  batch_size: 16
-  grad_accumulation_steps: 4
-  learning_rate: 2e-5
+  batch_size: 2
+  grad_accumulation_steps: 2
+  learning_rate: 1e-5
   warmup_ratio: 0.06
   weight_decay: 0.01
   fp16: true
@@ -43,7 +43,7 @@ explainability:
 inference:
   device: "cuda"                             
   checkpoint: "./checkpoints/best_model"
-  batch_size: 8
+  batch_size: 2
   threshold:
     bug_detection: 0.5
     severity_high: 0.7
